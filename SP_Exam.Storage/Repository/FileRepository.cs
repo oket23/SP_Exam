@@ -89,10 +89,70 @@ public class FileRepository : IFileRepository
         return result;
     }
 
-    public Task<List<FileStats>> FindCopyAndReplaceWordAsync(string path, string word, string newWord, CancellationToken cts, IProgress<Tuple<int, string>> progress)
+    public async Task<List<FileStats>> FindCopyAndReplaceWordAsync(string path, string word, string newWord, string copyPath, CancellationToken cts, IProgress<Tuple<int, string>> progress)
     {
-        throw new NotImplementedException();
+        var result = new List<FileStats>();
+        var newPath = $"{copyPath}\\copy_{DateTime.UtcNow:yyyy-MM-dd_HH-mm-ss}";
+        Directory.CreateDirectory(newPath);
+
+        var allFiles = Directory.GetFiles(path);
+        var allFolders = Directory.GetDirectories(path);
+
+        var totalItems = allFiles.Length + allFolders.Length;
+        var progressItem = 0;
+
+        var FileTask = allFiles.Select(async x =>
+        {
+            cts.ThrowIfCancellationRequested();
+            var text = await File.ReadAllTextAsync(x, cts);
+
+            int matches = Regex.Matches(text, $@"\b{Regex.Escape(word)}\b", RegexOptions.IgnoreCase).Count;
+
+            if (matches > 0)
+            {
+                result.Add(new FileStats
+                {
+                    FileName = Path.GetFileName(x),
+                    FilePath = Path.GetFullPath(x),
+                    MatchCount = matches
+                });
+
+                var updatedText = text.Replace(word, newWord, StringComparison.OrdinalIgnoreCase);
+
+                var originalFileName = Path.GetFileNameWithoutExtension(x);
+                var extension = Path.GetExtension(x);
+                var modifiedFileName = $"{originalFileName}_copy{extension}";
+                var targetFilePath = Path.Combine(newPath, modifiedFileName);
+
+                await File.WriteAllTextAsync(targetFilePath, updatedText,cts);
+
+                var current = Interlocked.Increment(ref progressItem);
+                progress.Report(Tuple.Create((int)((float)current / totalItems * 100), Path.GetFullPath(x)));
+            }
+        }).ToArray();
+
+        await Task.WhenAll(FileTask);
+
+        var FolderTask = allFolders.Select(async x =>
+        {
+            cts.ThrowIfCancellationRequested();
+
+            var tempResult = await SearchWordInFolderAsync(x, word, cts, progress);
+
+            lock (_lock)
+            {
+                result.AddRange(tempResult);
+            }
+
+            var current = Interlocked.Increment(ref progressItem);
+            progress.Report(Tuple.Create((int)((float)current / totalItems * 100), Path.GetFullPath(x)));
+        }).ToArray();
+
+        await Task.WhenAll(FolderTask);
+
+        return result;
     }
+
 
     public async Task<List<FileStats>> SearchWordInFolderAsync(string path, string word, CancellationToken cts, IProgress<Tuple<int, string>> progress)
     {
