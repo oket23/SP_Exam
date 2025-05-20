@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Text;
+﻿using System.Text;
 namespace SP_Exam.Forms;
 
 public partial class MainForm : Form
@@ -25,21 +22,23 @@ public partial class MainForm : Form
             var progress = new Progress<Tuple<int, string>>(UpdateProgressBar);
             var folderPath = GetFolder();
             var searchData = await fileService.SearchWordInFolderAsync(folderPath, wordTB.Text.Trim(), _cts.Token, progress);
+            var sb = new StringBuilder();
+            sb.AppendLine($"Word: {wordTB.Text.Trim()}\nFiles found:{searchData.FilesMatched}\nWords found: {searchData.AllMatched}\nFile with statistics in folder: {searchData.FullPath}");
 
-            mainRTB.Text = $"Word: {wordTB.Text.Trim()}\nFiles found:{searchData.FilesMatched}\nWords found: {searchData.AllMatched}\nFile with statistics in folder: {searchData.FullPath}";
+            mainRTB.Text = sb.ToString();
             MessageBox.Show("Ready!");
         }
         catch (OperationCanceledException ex)
         {
-            MessageBox.Show(ex.Message);
+            MessageBox.Show(ex.Message,"Error", MessageBoxButtons.OK);
         }
         catch (ArgumentException ex)
         {
-            MessageBox.Show(ex.Message);
+            MessageBox.Show(ex.Message, "Error", MessageBoxButtons.OK);
         }
         catch (Exception ex)
         {
-            MessageBox.Show(ex.Message);
+            MessageBox.Show(ex.Message, "Error", MessageBoxButtons.OK);
         }
         finally
         {
@@ -70,15 +69,15 @@ public partial class MainForm : Form
         }
         catch (OperationCanceledException ex)
         {
-            MessageBox.Show(ex.Message);
+            MessageBox.Show(ex.Message, "Error", MessageBoxButtons.OK);
         }
         catch (ArgumentException ex)
         {
-            MessageBox.Show(ex.Message);
+            MessageBox.Show(ex.Message, "Error", MessageBoxButtons.OK);
         }
         catch (Exception ex)
         {
-            MessageBox.Show(ex.Message);
+            MessageBox.Show(ex.Message, "Error", MessageBoxButtons.OK);
         }
         finally
         {
@@ -99,22 +98,26 @@ public partial class MainForm : Form
             var temp = new EnterWordForm();
             temp.ShowDialog();
             var newWord = temp.GetWord();
+
             var searchData = await fileService.FindCopyAndReplaceWordAsync(folderPath,word, newWord, folderCopyPath,_cts.Token,progress);
-            mainRTB.Text = $"Files found: {searchData.FilesMatched}\nWords found: {searchData.AllMatched}\nFile with statistics in folder: {searchData.FullPath}\nFile successfully copied to folder {folderCopyPath}";
+            var sb = new StringBuilder();
+
+            sb.AppendLine($"Files found: {searchData.FilesMatched}\nWords found: {searchData.AllMatched}\nFile with statistics in folder: {searchData.FullPath}\nFile successfully copied to folder {folderCopyPath}");
+            mainRTB.Text = sb.ToString();
 
             MessageBox.Show("Ready!");
         }
         catch (OperationCanceledException ex)
         {
-            MessageBox.Show(ex.Message);
+            MessageBox.Show(ex.Message, "Error", MessageBoxButtons.OK);
         }
         catch (ArgumentException ex)
         {
-            MessageBox.Show(ex.Message);
+            MessageBox.Show(ex.Message, "Error", MessageBoxButtons.OK);
         }
         catch (Exception ex)
         {
-            MessageBox.Show(ex.Message);
+            MessageBox.Show(ex.Message, "Error", MessageBoxButtons.OK);
         }
         finally
         {
