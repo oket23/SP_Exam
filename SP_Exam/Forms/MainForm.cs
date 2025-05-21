@@ -1,14 +1,13 @@
-﻿using System.Text;
+﻿using SP_Exam.Core.Dtos;
+using System.Text;
 namespace SP_Exam.Forms;
 
 public partial class MainForm : Form
 {
     private CancellationTokenSource _cts;
-    private readonly Dependency _dependency;
     public MainForm()
     {
         _cts = new CancellationTokenSource();
-        _dependency = new Dependency();
         InitializeComponent();
     }
 
@@ -17,11 +16,19 @@ public partial class MainForm : Form
         try
         {
             StartPreset();
-
+           
             var fileService = Dependency.GetFileService();
-            var progress = new Progress<Tuple<int, string>>(UpdateProgressBar);
             var folderPath = GetFolder();
-            var searchData = await fileService.SearchWordInFolderAsync(folderPath, wordTB.Text.Trim(), _cts.Token, progress);
+
+            var dto = new MethodParamsDto
+            {
+                Cts = _cts.Token,
+                Word = wordTB.Text.Trim(),
+                Progress = new Progress<Tuple<int, string>>(UpdateProgressBar)
+            };
+
+            var searchData = await fileService.FindWordInDirectoryAsync(folderPath, dto);
+
             var sb = new StringBuilder();
             sb.AppendLine($"Word: {wordTB.Text.Trim()}\nFiles found:{searchData.FilesMatched}\nWords found: {searchData.AllMatched}\nFile with statistics in folder: {searchData.FullPath}");
 
@@ -52,9 +59,15 @@ public partial class MainForm : Form
             StartPreset();
 
             var fileService = Dependency.GetFileService();
-            var progress = new Progress<Tuple<int, string>>(UpdateProgressBar);
             var folderPath = GetFolder();
-            var searchData = await fileService.FindClassesAndInterfacesAsync(folderPath, _cts.Token, progress);
+
+            var dto = new MethodParamsDto
+            {
+                Cts = _cts.Token,
+                Progress = new Progress<Tuple<int, string>>(UpdateProgressBar)
+            };
+
+            var searchData = await fileService.FindClassesAndInterfacesAsync(folderPath, dto);
 
             var sb = new StringBuilder();
             sb.AppendLine("Classes and Interfaces:");
@@ -90,16 +103,23 @@ public partial class MainForm : Form
         {
             StartPreset();
             var fileService = Dependency.GetFileService();
-            var progress = new Progress<Tuple<int, string>>(UpdateProgressBar);
             var folderPath = GetFolder();
             MessageBox.Show("Enter the folder to copy the files to.");
             var folderCopyPath = GetFolder();
-            var word = wordTB.Text.Trim();
+
             var temp = new EnterWordForm();
             temp.ShowDialog();
-            var newWord = temp.GetWord();
 
-            var searchData = await fileService.FindCopyAndReplaceWordAsync(folderPath,word, newWord, folderCopyPath,_cts.Token,progress);
+            var dto = new MethodParamsDto()
+            {
+                Word = wordTB.Text.Trim(),
+                NewWord = temp.GetWord(),
+                CopyPath = folderCopyPath,
+                Progress = new Progress<Tuple<int, string>>(UpdateProgressBar),
+                Cts = _cts.Token
+            };
+            var searchData = await fileService.FindCopyAndReplaceWordAsync(folderPath, dto);
+
             var sb = new StringBuilder();
 
             sb.AppendLine($"Files found: {searchData.FilesMatched}\nWords found: {searchData.AllMatched}\nFile with statistics in folder: {searchData.FullPath}\nFile successfully copied to folder {folderCopyPath}");

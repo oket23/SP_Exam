@@ -1,5 +1,4 @@
-﻿using System.IO;
-using Microsoft.VisualBasic.Devices;
+﻿using SP_Exam.Core.Dtos;
 using SP_Exam.Core.Interfaces.Repository;
 using SP_Exam.Core.Interfaces.Service;
 using SP_Exam.Core.Models;
@@ -15,50 +14,34 @@ public class FileService : IFileService
         _fileRepository = fileRepository;
     }
 
-    public async Task<SearchData> FindClassesAndInterfacesAsync(string path, CancellationToken cts, IProgress<Tuple<int, string>> progress)
+    public Task<SearchData> FindClassesAndInterfacesAsync(string path, MethodParamsDto dto)
     {
-        Validatiod(path, cts);
+        Validatiod(path, dto.Cts);
 
-        return await GetResult(path,cts,progress);
+        return GetResult(path, dto, _fileRepository.FindClassesAndInterfacesAsync);
     }
 
-    public async Task<SearchData> FindCopyAndReplaceWordAsync(string path, string word, string newWord, string copyPath, CancellationToken cts, IProgress<Tuple<int, string>> progress)
+    public Task<SearchData> FindCopyAndReplaceWordAsync(string path, MethodParamsDto dto)
     {
-        Validatiod(path,copyPath,word,newWord, cts);
+        Validatiod(path, dto.CopyPath, dto.Word, dto.NewWord, dto.Cts);
 
-        return await GetResult(path, word,newWord,copyPath, cts, progress);
+        return GetResult(path, dto, _fileRepository.FindCopyAndReplaceWordAsync);
     }
 
-    public async Task<SearchData> SearchWordInFolderAsync(string path,string word, CancellationToken cts, IProgress<Tuple<int, string>> progress)
+    public Task<SearchData> FindWordInDirectoryAsync(string path, MethodParamsDto dto)
     {
+        Validatiod(path, dto.Word, dto.Cts);
 
-        Validatiod(path, word, cts);
-
-        return await GetResult(path,word,cts, progress);
+        return GetResult(path,dto, _fileRepository.FindWordInDirectoryAsync);
     }
 
-    private async Task<SearchData> GetResult(string path, string word,CancellationToken cts,IProgress<Tuple<int,string>> progress)
+    private async Task<SearchData> GetResult(string path, MethodParamsDto dto, Func<string, MethodParamsDto, Task<List<FileStats>>> processFilesAsync)
     {
         var result = new SearchData();
-        result.FileStats = await _fileRepository.SearchWordInFolderAsync(path, word, cts, progress);
-        result.FullPath = await _fileRepository.CreateStatisticsFileAsync($"stats\\stats_{DateTime.UtcNow:yyyy-MM-dd_HH-mm-ss}.json", result.FileStats, cts);
+        result.FileStats = await _fileRepository.WorkWithFiles(path,dto,processFilesAsync);
+        result.FullPath = await _fileRepository.CreateStatisticsFileAsync($"stats\\stats_{DateTime.UtcNow:yyyy-MM-dd_HH-mm-ss}.json", result.FileStats, dto.Cts);
 
-        return (result.FileStats.Count == 0) ? throw new FileNotFoundException("Word not found...") : result;
-    }
-    private async Task<SearchData> GetResult(string path, string word,string newWord, string copyPath, CancellationToken cts, IProgress<Tuple<int, string>> progress)
-    {
-        var result = new SearchData();
-        result.FileStats = await _fileRepository.FindCopyAndReplaceWordAsync(path, word, newWord, copyPath, cts, progress);
-        result.FullPath = await _fileRepository.CreateStatisticsFileAsync($"stats\\stats_{DateTime.UtcNow:yyyy-MM-dd_HH-mm-ss}.json", result.FileStats, cts);
-
-        return (result.FileStats.Count == 0) ? throw new FileNotFoundException("Word not found...") : result;
-    }
-    private async Task<SearchData> GetResult(string path, CancellationToken cts, IProgress<Tuple<int, string>> progress)
-    {
-        var result = new SearchData();
-        result.FileStats = await _fileRepository.FindClassesAndInterfacesAsync(path, cts, progress);
-        result.FullPath = await _fileRepository.CreateStatisticsFileAsync($"stats\\stats_{DateTime.UtcNow:yyyy-MM-dd_HH-mm-ss}.json", result.FileStats, cts);
-        return (result.FileStats.Count == 0) ? throw new FileNotFoundException("Classes or interfaces not found...") : result;
+        return (result.FileStats.Count == 0) ? throw new FileNotFoundException("Nothing found...") : result;
     }
 
     private void Validatiod(string path,CancellationToken cts) 

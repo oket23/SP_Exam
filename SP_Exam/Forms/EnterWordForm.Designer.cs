@@ -30,12 +30,13 @@
         {
             wordTB = new TextBox();
             oKBtn = new Button();
+            PBLaybel = new RichTextBox();
             SuspendLayout();
             // 
             // wordTB
             // 
             wordTB.Font = new Font("Lucida Sans Unicode", 12F);
-            wordTB.Location = new Point(69, 23);
+            wordTB.Location = new Point(69, 48);
             wordTB.MaxLength = 30;
             wordTB.Name = "wordTB";
             wordTB.PlaceholderText = "Enter word";
@@ -46,7 +47,7 @@
             // 
             oKBtn.FlatStyle = FlatStyle.System;
             oKBtn.Font = new Font("Lucida Sans Unicode", 12F);
-            oKBtn.Location = new Point(69, 76);
+            oKBtn.Location = new Point(69, 98);
             oKBtn.Name = "oKBtn";
             oKBtn.Size = new Size(184, 36);
             oKBtn.TabIndex = 5;
@@ -54,11 +55,25 @@
             oKBtn.UseVisualStyleBackColor = true;
             oKBtn.Click += oKBtn_Click;
             // 
+            // PBLaybel
+            // 
+            PBLaybel.BackColor = SystemColors.Control;
+            PBLaybel.BorderStyle = BorderStyle.None;
+            PBLaybel.Font = new Font("Lucida Sans Unicode", 18F, FontStyle.Regular, GraphicsUnit.Point, 204);
+            PBLaybel.Location = new Point(69, 12);
+            PBLaybel.Multiline = false;
+            PBLaybel.Name = "PBLaybel";
+            PBLaybel.ReadOnly = true;
+            PBLaybel.Size = new Size(184, 30);
+            PBLaybel.TabIndex = 9;
+            PBLaybel.Text = "Enter new word";
+            // 
             // EnterWordForm
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(308, 156);
+            Controls.Add(PBLaybel);
             Controls.Add(oKBtn);
             Controls.Add(wordTB);
             FormBorderStyle = FormBorderStyle.Fixed3D;
@@ -74,5 +89,6 @@
 
         private TextBox wordTB;
         private Button oKBtn;
+        private RichTextBox PBLaybel;
     }
 }

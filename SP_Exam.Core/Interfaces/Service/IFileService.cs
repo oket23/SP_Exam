@@ -1,10 +1,11 @@
-﻿using SP_Exam.Core.Models;
+﻿using SP_Exam.Core.Dtos;
+using SP_Exam.Core.Models;
 
 namespace SP_Exam.Core.Interfaces.Service;
 
 public interface IFileService
 {
-    Task<SearchData> SearchWordInFolderAsync(string path,string word, CancellationToken cts, IProgress<Tuple<int, string>> progress);
-    Task<SearchData> FindCopyAndReplaceWordAsync(string path, string word, string newWord, string copyPath, CancellationToken cts, IProgress<Tuple<int, string>> progress);
-    Task<SearchData> FindClassesAndInterfacesAsync(string path, CancellationToken cts, IProgress<Tuple<int, string>> progress);
+    Task<SearchData> FindWordInDirectoryAsync(string path, MethodParamsDto dto);
+    Task<SearchData> FindCopyAndReplaceWordAsync(string path, MethodParamsDto dto);
+    Task<SearchData> FindClassesAndInterfacesAsync(string path, MethodParamsDto dto);
 }
